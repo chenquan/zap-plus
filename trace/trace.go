@@ -19,10 +19,10 @@ package trace
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/chenquan/zap-plus/config"
-	"github.com/chenquan/zap-plus/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/zipkin"
@@ -31,7 +31,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 const (
@@ -77,7 +76,7 @@ func startAgent(c *config.Trace) error {
 	if len(c.Endpoint) > 0 {
 		exp, err := createExporter(c)
 		if err != nil {
-			log.Panic("opentelemetry exporter err", zap.Error(err))
+			log.Println("opentelemetry exporter err", err)
 			return err
 		}
 
@@ -92,7 +91,7 @@ func startAgent(c *config.Trace) error {
 		propagation.TraceContext{}, propagation.Baggage{}))
 
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		log.Error("[opentelemetry] error", zap.Error(err))
+		log.Println("opentelemetry error", err)
 	}))
 
 	return nil
