@@ -29,13 +29,17 @@ import (
 	stdtrace "go.opentelemetry.io/otel/trace"
 )
 
-var logger = zap.NewNop()
-var Info = logger.Info
-var Panic = logger.Panic
-var Error = logger.Error
-var Warn = logger.Warn
-var Debug = logger.Debug
-var Fatal = logger.Fatal
+var (
+	logger = zap.New(zapcore.NewCore(
+		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+		os.Stdout, zap.InfoLevel))
+	Info  = logger.Info
+	Panic = logger.Panic
+	Error = logger.Error
+	Warn  = logger.Warn
+	Debug = logger.Debug
+	Fatal = logger.Fatal
+)
 
 type Log struct {
 	*zap.Logger
