@@ -59,25 +59,27 @@ func NewLogger(c *config.Config) (err error) {
 	}
 
 	var w []zapcore.WriteSyncer
-	if c.Mode == "file" {
+	switch c.Mode {
+	case "file":
 		w = append(w, zapcore.AddSync(&c.Logger))
-	} else if c.Mode == "console" {
+	case "console":
 		w = append(w, zapcore.AddSync(os.Stdout))
-	} else {
+	default:
 		w = append(w, zapcore.AddSync(&c.Logger), zapcore.AddSync(os.Stdout))
 	}
 
 	var core zapcore.Core
-	if c.Format == "json" {
+	switch c.Format {
+	case "json":
 		core = zapcore.NewCore(zapcore.NewJSONEncoder(
 			zap.NewProductionEncoderConfig()),
 			zapcore.NewMultiWriteSyncer(w...),
 			logLevel)
-	} else if c.Format == "text" {
+	case "text":
 		core = zapcore.NewCore(
 			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 			zapcore.NewMultiWriteSyncer(w...), logLevel)
-	} else {
+	default:
 		core = zapcore.NewNopCore()
 	}
 	logger = zap.New(core, zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
