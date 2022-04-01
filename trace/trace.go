@@ -40,8 +40,6 @@ const (
 )
 
 var (
-	name               = "zap-plus"
-	once               sync.Once
 	tracer             trace.Tracer
 	ErrUnknownExporter = errors.New("unknown exporter error")
 )
@@ -50,13 +48,6 @@ var (
 	agents = make(map[string]struct{})
 	lock   sync.Mutex
 )
-
-// SetName sets a instrumentationName.
-func SetName(instrumentationName string) {
-	once.Do(func() {
-		name = instrumentationName
-	})
-}
 
 // StartAgent starts a opentelemetry agent.
 func StartAgent(c *config.Trace) {
@@ -72,7 +63,8 @@ func StartAgent(c *config.Trace) {
 	if err := startAgent(c); err != nil {
 		return
 	}
-	tracer = otel.Tracer(name)
+
+	tracer = otel.Tracer(c.Name)
 
 	agents[c.Endpoint] = struct{}{}
 }

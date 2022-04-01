@@ -21,13 +21,13 @@ import "gopkg.in/natefinch/lumberjack.v2"
 type (
 	// Config represents a configuration.
 	Config struct {
-		lumberjack.Logger
 		Trace
 		// Level is the log level. Possible values: debug, info, warn, error
 		Level string `yaml:"level" validate:"eq=debug|eq=info|eq=warn|eq=error"`
 		// Format is the log format. Possible values: json, text
 		Format string `yaml:"format" validate:"eq=text|eq=json"`
 		Mode   string `yaml:"mode" validate:"eq=file|eq=console|eq="`
+		lumberjack.Logger
 	}
 	// Trace represents a tracing configuration.
 	Trace struct {
