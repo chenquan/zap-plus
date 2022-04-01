@@ -27,7 +27,7 @@ type (
 		Level string `yaml:"level" validate:"eq=debug|eq=info|eq=warn|eq=error"`
 		// Format is the log format. Possible values: json, text
 		Format string `yaml:"format" validate:"eq=text|eq=json"`
-		Mode   string `yaml:"mode"`
+		Mode   string `yaml:"mode" validate:"eq=file|eq=console|eq="`
 	}
 	// Trace represents a tracing configuration.
 	Trace struct {
