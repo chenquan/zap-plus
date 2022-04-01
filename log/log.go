@@ -45,6 +45,48 @@ type Log struct {
 	*zap.Logger
 }
 
+func NewLogger(c *config.Config) (err error) {
+	validate := validator.New()
+	err = validate.Struct(c)
+	if err != nil {
+		return
+	}
+
+	var logLevel zapcore.Level
+	err = logLevel.UnmarshalText([]byte(c.Level))
+	if err != nil {
+		return
+	}
+
+	var w []zapcore.WriteSyncer
+	if c.Mode == "file" {
+		w = append(w, zapcore.AddSync(&c.Logger))
+	} else if c.Mode == "console" {
+		w = append(w, zapcore.AddSync(os.Stdout))
+	} else {
+		w = append(w, zapcore.AddSync(&c.Logger), zapcore.AddSync(os.Stdout))
+	}
+
+	var core zapcore.Core
+	if c.Format == "json" {
+		core = zapcore.NewCore(zapcore.NewJSONEncoder(
+			zap.NewProductionEncoderConfig()),
+			zapcore.NewMultiWriteSyncer(w...),
+			logLevel)
+	} else if c.Format == "text" {
+		core = zapcore.NewCore(
+			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+			zapcore.NewMultiWriteSyncer(w...), logLevel)
+	} else {
+		core = zapcore.NewNopCore()
+	}
+	logger = zap.New(core, zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
+
+	trace.StartAgent(&c.Trace)
+
+	return
+}
+
 // LoggerModule release fields to a new logger.
 // Plugins can use this method to release plugin name field.
 func LoggerModule(moduleName string) *Log {
@@ -88,45 +130,4 @@ func traceIdFromContext(ctx context.Context) string {
 	}
 
 	return ""
-}
-
-func NewLogger(c *config.Config) (err error) {
-	validate := validator.New()
-	err = validate.Struct(c)
-	if err != nil {
-		return
-	}
-
-	var logLevel zapcore.Level
-	err = logLevel.UnmarshalText([]byte(c.Level))
-	if err != nil {
-		return
-	}
-	var w []zapcore.WriteSyncer
-	if c.Mode == "file" {
-		w = append(w, zapcore.AddSync(&c.Logger))
-	} else if c.Mode == "console" {
-		w = append(w, zapcore.AddSync(os.Stdout))
-	} else {
-		w = append(w, zapcore.AddSync(&c.Logger), zapcore.AddSync(os.Stdout))
-	}
-
-	var core zapcore.Core
-	if c.Format == "json" {
-		core = zapcore.NewCore(zapcore.NewJSONEncoder(
-			zap.NewProductionEncoderConfig()),
-			zapcore.NewMultiWriteSyncer(w...),
-			logLevel)
-	} else if c.Format == "text" {
-		core = zapcore.NewCore(
-			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
-			zapcore.NewMultiWriteSyncer(w...), logLevel)
-	} else {
-		core = zapcore.NewNopCore()
-	}
-	logger = zap.New(core, zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
-
-	trace.StartAgent(&c.Trace)
-
-	return
 }

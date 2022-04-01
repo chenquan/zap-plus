@@ -17,6 +17,7 @@
 package trace
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -39,6 +40,9 @@ const (
 )
 
 var (
+	name               = "zap-plus"
+	once               sync.Once
+	tracer             trace.Tracer
 	ErrUnknownExporter = errors.New("unknown exporter error")
 )
 
@@ -46,6 +50,13 @@ var (
 	agents = make(map[string]struct{})
 	lock   sync.Mutex
 )
+
+// SetName sets a instrumentationName.
+func SetName(instrumentationName string) {
+	once.Do(func() {
+		name = instrumentationName
+	})
+}
 
 // StartAgent starts a opentelemetry agent.
 func StartAgent(c *config.Trace) {
@@ -61,6 +72,7 @@ func StartAgent(c *config.Trace) {
 	if err := startAgent(c); err != nil {
 		return
 	}
+	tracer = otel.Tracer(name)
 
 	agents[c.Endpoint] = struct{}{}
 }
@@ -111,4 +123,9 @@ func createExporter(c *config.Trace) (sdktrace.SpanExporter, error) {
 
 func GetTracerProvider() trace.TracerProvider {
 	return otel.GetTracerProvider()
+}
+
+// Start creates a span and a context.Context containing the newly-created span.
+func Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	return tracer.Start(ctx, spanName, opts...)
 }
