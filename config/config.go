@@ -27,12 +27,13 @@ type (
 		Level string `yaml:"level" validate:"eq=debug|eq=info|eq=warn|eq=error"`
 		// Format is the log format. Possible values: json, text
 		Format string `yaml:"format" validate:"eq=text|eq=json"`
+		Mode   string `yaml:"mode"`
 	}
 	// Trace represents a tracing configuration.
 	Trace struct {
 		Name     string  `yaml:"name"`
 		Endpoint string  `yaml:"endpoint"`
 		Sampler  float64 `yaml:"sampler"`
-		Batcher  string  `yaml:"batcher"  validate:"eq=jaeger|eq=zipkin"` //jaeger|zipkin
+		Batcher  string  `yaml:"batcher"  validate:"eq=jaeger|eq=zipkin|eq="` // jaeger|zipkin
 	}
 )
