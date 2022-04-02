@@ -131,6 +131,10 @@ func (l *Log) WithContext(ctx context.Context) *zap.Logger {
 	spanId := spanIdFromContext(ctx)
 	straceId := traceIdFromContext(ctx)
 
+	if spanId != "" || straceId != "" {
+		return l.Logger
+	}
+
 	return l.With(
 		zap.String("traceId", straceId),
 		zap.String("spanId", spanId),
