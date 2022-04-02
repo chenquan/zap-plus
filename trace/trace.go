@@ -40,13 +40,12 @@ const (
 )
 
 var (
-	tracer             trace.Tracer
 	ErrUnknownExporter = errors.New("unknown exporter error")
-)
-
-var (
-	agents = make(map[string]struct{})
-	lock   sync.Mutex
+	tracer             = otel.Tracer("zap-plus")
+	agents             = make(map[string]struct{})
+	lock               sync.Mutex
+	// GetTracerProvider is alis of otel.GetTracerProvider
+	GetTracerProvider = otel.GetTracerProvider
 )
 
 // StartAgent starts a opentelemetry agent.
@@ -111,10 +110,6 @@ func createExporter(c *config.Trace) (sdktrace.SpanExporter, error) {
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownExporter, c.Batcher)
 	}
-}
-
-func GetTracerProvider() trace.TracerProvider {
-	return otel.GetTracerProvider()
 }
 
 // Start creates a span and a context.Context containing the newly-created span.
