@@ -18,6 +18,7 @@ package log
 
 import (
 	"context"
+	"io"
 	"os"
 
 	"github.com/chenquan/zap-plus/config"
@@ -45,7 +46,19 @@ type Log struct {
 	*zap.Logger
 }
 
-func NewLogger(c *config.Config) (err error) {
+type options struct {
+	w io.Writer
+}
+
+type Option func(*options)
+
+func WithWriter(w io.Writer) Option {
+	return func(o *options) {
+		o.w = w
+	}
+}
+
+func NewLogger(c *config.Config, opts ...Option) (err error) {
 	validate := validator.New()
 	err = validate.Struct(c)
 	if err != nil {
@@ -66,6 +79,14 @@ func NewLogger(c *config.Config) (err error) {
 		w = append(w, zapcore.AddSync(os.Stdout))
 	default:
 		w = append(w, zapcore.AddSync(&c.Logger), zapcore.AddSync(os.Stdout))
+	}
+
+	o := new(options)
+	for _, opt := range opts {
+		opt(o)
+	}
+	if o.w != nil {
+		w = append(w, zapcore.AddSync(o.w))
 	}
 
 	var core zapcore.Core
