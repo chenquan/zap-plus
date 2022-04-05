@@ -34,12 +34,19 @@ var (
 	logger = zap.New(zapcore.NewCore(
 		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 		os.Stdout, zap.InfoLevel))
-	Info  = logger.Info
-	Panic = logger.Panic
-	Error = logger.Error
-	Warn  = logger.Warn
-	Debug = logger.Debug
-	Fatal = logger.Fatal
+	Info        = logger.Info
+	Panic       = logger.Panic
+	Error       = logger.Error
+	Warn        = logger.Warn
+	Debug       = logger.Debug
+	Fatal       = logger.Fatal
+	With        = logger.With
+	Check       = logger.Check
+	Named       = logger.Named
+	Core        = logger.Core
+	Sugar       = logger.Sugar
+	Sync        = logger.Sync
+	WithOptions = logger.WithOptions
 )
 
 type Log struct {
