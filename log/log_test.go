@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/chenquan/zap-plus/config"
-	"github.com/chenquan/zap-plus/trace"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -22,12 +22,12 @@ func TestNewLogger(t *testing.T) {
 		Logger: lumberjack.Logger{},
 	}, WithWriter(buffer))
 	assert.NoError(t, err)
-	log := Logger()
 
-	log.Debug("debug")
-	log.Info("info")
-	log.Warn("warn")
-	log.Error("error")
+	Debug("debug")
+	Info("info")
+	Warn("warn")
+	Error("error")
+
 	assert.NoError(t, err)
 	assert.True(t, strings.Contains(buffer.String(), "debug"))
 	assert.True(t, strings.Contains(buffer.String(), "info"))
@@ -35,20 +35,12 @@ func TestNewLogger(t *testing.T) {
 	assert.True(t, strings.Contains(buffer.String(), "error"))
 
 	buffer.Reset()
-	log.WithContext(context.Background()).Info("info")
+	WithContext(context.Background()).Info("info")
 	assert.True(t, strings.Contains(buffer.String(), "info"))
 
 	buffer.Reset()
-	ctx, span := trace.Start(context.Background(), "any")
-	log.WithContext(ctx).Info("info")
-	assert.True(t, strings.Contains(buffer.String(), "info"))
-	span.End()
-
-	buffer.Reset()
-
-	ctx, span = trace.Start(context.Background(), "any")
-	log = LoggerModule("Module")
-	log.WithContext(ctx).Info("info")
+	ctx, span := otel.Tracer("11").Start(context.Background(), "any")
+	WithContext(ctx).Info("info")
 	assert.True(t, strings.Contains(buffer.String(), "info"))
 	span.End()
 }
