@@ -20,6 +20,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/chenquan/zap-plus/config"
 	"github.com/chenquan/zap-plus/trace"
@@ -31,27 +32,11 @@ import (
 )
 
 var (
+	mu     = sync.RWMutex{}
 	logger = zap.New(zapcore.NewCore(
 		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 		os.Stdout, zap.InfoLevel))
-	Info        = logger.Info
-	Panic       = logger.Panic
-	Error       = logger.Error
-	Warn        = logger.Warn
-	Debug       = logger.Debug
-	Fatal       = logger.Fatal
-	With        = logger.With
-	Check       = logger.Check
-	Named       = logger.Named
-	Core        = logger.Core
-	Sugar       = logger.Sugar
-	Sync        = logger.Sync
-	WithOptions = logger.WithOptions
 )
-
-type Log struct {
-	*zap.Logger
-}
 
 type options struct {
 	w io.Writer
@@ -108,7 +93,7 @@ func NewLogger(c *config.Config, opts ...Option) (err error) {
 			zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 			zapcore.NewMultiWriteSyncer(w...), logLevel)
 	default:
-		core = zapcore.NewNopCore()
+		logger.Panic("unknown format")
 	}
 	logger = zap.New(core, zap.AddStacktrace(zap.ErrorLevel), zap.AddCaller())
 
@@ -117,32 +102,17 @@ func NewLogger(c *config.Config, opts ...Option) (err error) {
 	return
 }
 
-// LoggerModule release fields to a new logger.
-// Plugins can use this method to release plugin name field.
-func LoggerModule(moduleName string) *Log {
-	return &Log{
-		Logger: logger.With(zap.String("moduleName", moduleName)),
-	}
-}
-
-// Logger release fields to a new logger.
-func Logger() *Log {
-	return &Log{
-		Logger: logger,
-	}
-}
-
 // WithContext release fields to a new logger.
 // Plugins can use this method to release plugin name field.
-func (l *Log) WithContext(ctx context.Context) *zap.Logger {
+func WithContext(ctx context.Context) *zap.Logger {
 	spanId := spanIdFromContext(ctx)
 	straceId := traceIdFromContext(ctx)
 
-	if spanId != "" || straceId != "" {
-		return l.Logger
+	if spanId == "" || straceId == "" {
+		return logger
 	}
 
-	return l.With(
+	return logger.With(
 		zap.String("traceId", straceId),
 		zap.String("spanId", spanId),
 	)
@@ -164,4 +134,69 @@ func traceIdFromContext(ctx context.Context) string {
 	}
 
 	return ""
+}
+
+func log() *zap.Logger {
+	mu.RLock()
+	l := logger
+	mu.RUnlock()
+	return l
+}
+
+func SetLog(log *zap.Logger) {
+	mu.Lock()
+	logger = log
+	mu.Unlock()
+}
+
+func Info(msg string, fields ...zap.Field) {
+	log().Info(msg, fields...)
+}
+
+func Error(msg string, fields ...zap.Field) {
+	log().Error(msg, fields...)
+}
+
+func Warn(msg string, fields ...zap.Field) {
+	log().Warn(msg, fields...)
+}
+
+func Panic(msg string, fields ...zap.Field) {
+	log().Panic(msg, fields...)
+}
+
+func Debug(msg string, fields ...zap.Field) {
+	log().Debug(msg, fields...)
+}
+
+func Fatal(msg string, fields ...zap.Field) {
+	log().Fatal(msg, fields...)
+}
+
+func With(fields ...zap.Field) {
+	log().With(fields...)
+}
+
+func Check(lvl zapcore.Level, msg string) {
+	log().Check(lvl, msg)
+}
+
+func Named(s string) *zap.Logger {
+	return log().Named(s)
+}
+
+func Core() zapcore.Core {
+	return log().Core()
+}
+
+func Sugar() *zap.SugaredLogger {
+	return log().Sugar()
+}
+
+func Sync() error {
+	return log().Sync()
+}
+
+func WithOptions(opts ...zap.Option) *zap.Logger {
+	return log().WithOptions(opts...)
 }
